@@ -7,6 +7,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,7 +16,7 @@ import (
 	"github.com/huin/goupnp/dcps/internetgateway2"
 )
 
-var duration = 10
+var duration = 30
 
 type CloudFlare struct {
 	Token    string
@@ -173,7 +175,33 @@ func UpdateIp(CloudFlare *CloudFlare) {
 }
 
 func main() {
-	cloudFlare, err := NewCloudFlare("", "", "")
+	token, exists := os.LookupEnv("TOKEN")
+	if !exists {
+		log.Fatal("TOKEN env is undefined")
+	}
+
+	zoneId, exists := os.LookupEnv("ZONEID")
+	if !exists {
+		log.Fatal("ZONEID env is undefined")
+	}
+
+	domain, exists := os.LookupEnv("DOMAIN")
+	if !exists {
+		log.Fatal("DOMAIN env is undefined")
+	}
+
+	durationEnv, exists := os.LookupEnv("DURATION")
+	if exists {
+		var err error
+		duration, err = strconv.Atoi(durationEnv)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	log.Printf("update duration is %ds\n", duration)
+
+	cloudFlare, err := NewCloudFlare(token, zoneId, domain)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -183,6 +211,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	UpdateIp(cloudFlare)
 	_, err = s.NewJob(
 		gocron.DurationJob(
 			time.Duration(duration)*time.Second,
