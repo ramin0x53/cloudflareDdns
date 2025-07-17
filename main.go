@@ -199,6 +199,10 @@ func main() {
 		}
 	}
 
+	if duration <= 5 {
+		log.Printf("update duration should be more than 5s")
+	}
+
 	log.Printf("update duration is %ds\n", duration)
 
 	cloudFlare, err := NewCloudFlare(token, zoneId, domain)
